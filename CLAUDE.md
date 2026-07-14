@@ -1,10 +1,47 @@
-# Claude Bug Bounty — Plugin Guide
+# CLAUDE.md
 
-This repo is a Claude Code plugin for professional bug bounty hunting across HackerOne, Bugcrowd, Intigriti, and Immunefi.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## What's Here
+## What This Repo Is
 
-### Skills (10 domains — load with `/bug-bounty`, `/web2-recon`, `/token-scan`, etc.)
+**BugHunter** (`claude-bug-bounty`) is a professional bug bounty hunting toolkit distributed two ways from one codebase:
+
+1. **Claude Code plugin** — skills, slash commands, agents, and rules that get loaded into `~/.claude/` (or another agent harness) via `install.sh` and drive hunts interactively inside Claude Code / OpenCode / Pi / Codex.
+2. **Standalone CLI (`bughunter`)** — `engine.py` runs the same recon→hunt→validate→report pipeline without any Claude subscription, using `brain.py` as a multi-provider LLM layer (Ollama, Groq, DeepSeek, Claude, OpenAI, Gemini, Kimi, Mistral, Together, Cerebras, Perplexity) and `agent.py` as an optional LangGraph-style ReAct autonomous agent.
+
+Both modes call into the same `tools/` scanner pipeline and the same `memory/` persistence layer — the plugin surface (skills/commands/agents) is just a thin routing layer over those.
+
+This is dual-use offensive-security tooling scoped to **authorized bug bounty programs only** (HackerOne, Bugcrowd, Intigriti, Immunefi, safe-harbor equivalents) — see "Authorized-use context" below before making changes that affect scope-checking or safety gates.
+
+## Development Commands
+
+```bash
+pytest tests/                                    # full test suite
+pytest tests/test_scope_checker.py               # one test file
+pytest tests/test_scope_checker.py::TestOutOfScope::test_name -v   # one test
+bash tests/test_cicd_scanner.sh                  # shell-based test (not pytest — runs standalone)
+```
+
+- No linter/formatter is configured (no `pyproject.toml`, `.flake8`, or CI workflow in `.github/`). Match existing style.
+- `pytest.ini` sets `testpaths = tests` and `python_files = test_*.py`. `tests/conftest.py` adds both the repo root and `tools/` to `sys.path`, so tests import as either `tools.foo` or `foo`.
+- Install Python deps: `pip install -r requirements.txt` (just `requests` + `pytest`; provider SDKs like LangGraph/Ollama clients are optional and probed at runtime).
+- Install the plugin locally: `chmod +x install.sh && ./install.sh` (targets: `claude` (default), `opencode`, `pi`, `codex`, `agents`, `standalone`, `all`; add `--project` for a repo-local install instead of global).
+- Install external scanning binaries (subfinder, httpx, nuclei, katana, ffuf, dnsx, nmap, dalfox, etc.): `./install_tools.sh`.
+- Run the local vulnerable demo target for manual testing: `python3 serve.py` (serves `demo/`).
+
+## Architecture
+
+**Capability-gated tools.** Every script in `tools/` sources `tools/external_arsenal.sh` and checks `_have <tool>` before using an external binary — missing tools are skipped, not treated as errors. When adding a new tool wrapper, follow this pattern rather than hard-failing on a missing dependency.
+
+**Hunt memory (`memory/`)** is the cross-session, cross-target state shared by nearly everything: `pattern_db.py` learns patterns across targets, `audit_log.py` provides a request audit log/rate limiter/circuit breaker, `rotation.py` auto-rotates JSONL files at a 10MB cap (keeps 3 backups) on every append, and `schemas.py` validates every record written. Data lives as JSONL under a hunt-memory directory (see `tests/conftest.py` fixtures for the on-disk shape). `tools/lead_board.py` sits on top of this memory to track one ledger entry per recon-discovered lead per target (`memory/leads/<target>.jsonl`), routing each to the right `hunt-*` skill and tracking investigated/killed/reported status — this is the mechanism that prevents findings from being silently dropped (see Critical Rule 6 below).
+
+**Scope safety is deterministic, not LLM-judged.** `tools/scope_checker.py` is a plain Python scope matcher (wildcard/exact/excluded-domain matching) that gates every hunt — it is not an AI call, precisely so scope enforcement can't be talked out of itself.
+
+**Standalone-mode layering:** `engine.py` (CLI entrypoint, arg parsing, phase dispatch) → `brain.py` (`Brain` class: picks an LLM provider by env var or auto-detect, exposes `--phase recon|scan|chains|report|js|triage|next|full|plan|autopilot|exploit`) → `agent.py` (optional; only engaged via `--agent`/LangGraph flags for a full ReAct loop with working-memory compression every 5 steps and crash-resumable JSON sessions) → `tools/*` (actual scanning). Plugin-mode skills/commands ultimately shell out to the same `tools/*` scripts.
+
+**Multi-harness install.** `install.sh --agent <target>` copies/symlinks `skills/`, `commands/`, `agents/` into the right location per harness (`~/.claude/`, `~/.config/opencode/`, `~/.pi/agent/`, `~/.codex/`, `~/.agents/skills`, or installs the standalone `bughunter` binary). `CLAUDE.md` is the Claude Code manifest; `AGENTS.md` is the equivalent for the other harnesses — keep the skill/command/agent counts and tables in sync between the two when either changes.
+
+### Skills (13 domains — load with `/bug-bounty`, `/web2-recon`, `/token-scan`, etc.)
 
 | Skill | Domain |
 |---|---|
@@ -17,48 +54,25 @@ This repo is a Claude Code plugin for professional bug bounty hunting across Hac
 | `skills/meme-coin-audit/` | Meme coin rug pull detection, token authority checks, bonding curve exploits, LP attacks |
 | `skills/report-writing/` | H1/Bugcrowd/Intigriti/Immunefi report templates, CVSS 3.1, human tone |
 | `skills/triage-validation/` | 7-Question Gate, 4 gates, never-submit list, conditionally valid table |
-| `skills/credential-attack/` | Password spray methodology — when/why, 4-stage pipeline, mode selection, lockout tactics, legal guardrails, pitfalls learned from live tests |
-| `skills/mobile-pentest/` | Android/iOS app pentest — runtime-first proxy workflow, APK/IPA decompile for hidden endpoints + secrets, deeplink/exported-activity injection, WebView bridge, SSL pinning bypass |
+| `skills/credential-attack/` | Password spray methodology — when/why, 4-stage pipeline, mode selection, lockout tactics, legal guardrails |
+| `skills/mobile-pentest/` | Android/iOS app pentest — runtime-first proxy workflow, APK/IPA decompile, deeplink/exported-activity injection, WebView bridge, SSL pinning bypass |
 | `skills/cicd-security/` | CI/CD pipeline hunting — GitHub Actions injection, secret exfil, self-hosted runner poisoning, OIDC abuse, supply chain attacks |
-| `skills/graphql-audit/` | GraphQL hunting — introspection, field suggestions (clairvoyance), batching DoS, IDOR via aliasing, injection, auth bypass, depth bombs |
+| `skills/graphql-audit/` | GraphQL hunting — introspection, field suggestions, batching DoS, IDOR via aliasing, injection, auth bypass, depth bombs |
 
-### Commands (21 slash commands)
+### Commands (27 slash commands, in `commands/`)
 
-> **Note:** All commands are prefixed to avoid conflicts with Claude Code's built-in commands.
-> `/resume` is a reserved Claude Code command — use `/pickup` to continue a previous hunt.
+> All commands are prefixed to avoid conflicts with Claude Code's built-ins. `/resume` is reserved by Claude Code — use `/pickup` to continue a previous hunt.
 
-| Command | Usage |
-|---|---|
-| `/recon` | `/recon target.com` — full recon pipeline |
-| `/hunt` | `/hunt target.com` — start hunting |
-| `/validate` | `/validate` — run 7-Question Gate on current finding |
-| `/report` | `/report` — write submission-ready report |
-| `/chain` | `/chain` — build A→B→C exploit chain |
-| `/scope` | `/scope <asset>` — verify asset is in scope |
-| `/scope-aggregate` | `/scope-aggregate <program>` — pull every in-scope asset across H1/Bugcrowd/Intigriti/YWH/Immunefi |
-| `/triage` | `/triage` — quick 7-Question Gate |
-| `/web3-audit` | `/web3-audit <contract.sol>` — smart contract audit |
-| `/autopilot` | `/autopilot target.com --normal` — autonomous hunt loop |
-| `/surface` | `/surface target.com` — ranked attack surface |
-| `/pickup` | `/pickup target.com` — pick up previous hunt (was `/resume`) |
-| `/remember` | `/remember` — log finding to hunt memory |
-| `/intel` | `/intel target.com` — fetch CVE + disclosure intel |
-| `/token-scan` | `/token-scan <contract>` — meme coin/token rug pull scanner |
-| `/memory-gc` | `/memory-gc [--rotate|--purge-backups]` — inspect/rotate hunt-memory JSONL files (10MB cap, 3 backups) |
-| `/secrets-hunt` | `/secrets-hunt --js-bundle <recon-dir>` — leaked-credential scan (trufflehog/noseyparker/gitleaks) |
-| `/takeover` | `/takeover --recon <recon-dir>` — subdomain takeover candidates (dnsReaper/subjack) |
-| `/cloud-recon` | `/cloud-recon --keyword <name>` — public S3/Azure/GCP + CloudFlare-bypass origin IPs |
-| `/param-discover` | `/param-discover <url>` — find hidden HTTP parameters (Arjun/x8) |
-| `/bypass-403` | `/bypass-403 <url>` — try header/method/encoding tricks against a 403/401 |
-| `/arsenal` | `/arsenal [tool]` — list installed external tools or get an install hint |
-| `/scan-cves` | `/scan-cves <host>` — focused nuclei CVE sweep (high/critical) + optional log4j-scan |
-| `/wordlist-gen` | `/wordlist-gen <target>` — company-specific password wordlist (cewler + hashcat); requires `--with-credential-attack` |
-| `/osint-employees` | `/osint-employees <target>` — employee names + emails (theHarvester + username-anarchy, opt-in LinkedIn); requires `--with-credential-attack` |
-| `/breach-check` | `/breach-check <wordlist>` — HIBP k-anonymity rank wordlist by real-world breach count |
-| `/spray` | `/spray <url> --mode http-form\|oauth\|o365\|okta --users <f> --passes <f>` — password spray with hard guards (typed-host confirm, lockout warn, audit log) |
-| `/graphql-audit` | `/graphql-audit <url>` — full GraphQL audit: introspection, batching DoS, IDOR, injection, alias bomb, graphw00f fingerprint |
+Core workflow: `/recon`, `/hunt`, `/validate`, `/report`, `/chain`, `/triage`, `/pickup`, `/remember`, `/autopilot`, `/surface`.
+Scope: `/scope`, `/scope-aggregate`.
+Recon/enum add-ons: `/intel`, `/secrets-hunt`, `/takeover`, `/cloud-recon`, `/param-discover`, `/bypass-403`, `/scan-cves`, `/graphql-audit`, `/arsenal`.
+Web3: `/web3-audit`, `/token-scan`.
+Credential attack (all require `--with-credential-attack`): `/wordlist-gen`, `/osint-employees`, `/breach-check`, `/spray`.
+Utility: `/memory-gc`.
 
-### Agents (9 specialized agents)
+See `commands/README.md` for full per-command usage.
+
+### Agents (9 specialized agents, in `agents/`)
 
 - `recon-agent` — subdomain enum + live host discovery
 - `report-writer` — generates H1/Bugcrowd/Immunefi reports
@@ -68,72 +82,25 @@ This repo is a Claude Code plugin for professional bug bounty hunting across Hac
 - `autopilot` — autonomous hunt loop (scope→recon→rank→hunt→validate→report)
 - `recon-ranker` — attack surface ranking from recon output + memory
 - `token-auditor` — fast meme coin/token rug pull and security analysis
-- `credential-hunter` — orchestrates wordlist-gen + osint-employees + breach-check; HARD STOPS at spray for human go/no-go
+- `credential-hunter` — orchestrates wordlist-gen + osint-employees + breach-check; hard-stops at spray for human go/no-go
 
-### Rules (always active)
+### Rules (always active, in `rules/`)
 
-- `rules/hunting.md` — 17 critical hunting rules
+- `rules/hunting.md` — 17 critical hunting rules, incl. the engagement-context rule (see below)
 - `rules/reporting.md` — report quality rules
 
-### Tools (Python/shell — in `tools/`)
+### Tools (`tools/`, ~35 Python/shell scanners)
 
-- `tools/hunt.py` — master orchestrator
-- `tools/recon_engine.sh` — subdomain + URL discovery (now with optional `nuclei` phase)
-- `tools/vuln_scanner.sh` — XSS/SQLi/SSTI/MFA/SAML probe pipeline
-- `tools/validate.py` — 4-gate finding validator
-- `tools/learn.py` — CVE + disclosure intel
-- `tools/intel_engine.py` — on-demand intel with memory context
-- `tools/scope_checker.py` — deterministic scope safety checker
-- `tools/scope_aggregator.sh` — multi-platform scope pull (bbscope + bounty-targets-data)
-- `tools/secrets_hunter.sh` — trufflehog/noseyparker/gitleaks wrapper for FS/git/JS/GH-org
-- `tools/takeover_scanner.sh` — dnsReaper/subjack subdomain-takeover scanner
-- `tools/cloud_recon.sh` — S3Scanner + cloud_enum + CloudFail wrapper
-- `tools/param_discovery.sh` — Arjun/x8 hidden-parameter discovery
-- `tools/bypass_403.sh` — byp4xx + built-in 403/401 bypass matrix
-- `tools/cve_scan.sh` — focused nuclei CVE-tag sweep + optional log4j-scan
-- `tools/external_arsenal.sh` — installed-tool registry (~50 tools); other scripts source this for `_have <tool>`
-- `tools/cicd_scanner.sh` — GitHub Actions workflow scanner (sisakulint wrapper, remote scan)
-- `tools/token_scanner.py` — automated token red flag scanner (EVM + Solana)
-- `tools/wordlist_engine.sh` — company-specific password wordlist generator (cewler + hashcat rules); requires `--with-credential-attack`
-- `tools/osint_employees.sh` — employee names + email patterns for spray prep (theHarvester + username-anarchy, opt-in CrossLinked); requires `--with-credential-attack`
-- `tools/breach_checker.py` — HIBP k-anonymity wordlist enrichment; ranks passwords by breach count (no API key, free)
-- `tools/spray_orchestrator.sh` — password spray with typed-hostname guard + lockout warning + audit log; modes: http-form / oauth / o365 / okta (TREVOR); requires `--with-credential-attack` for TREVOR modes
-- `tools/graphql_audit.sh` — 7-phase GraphQL audit: introspection + schema dump, graphw00f fingerprint, clairvoyance field discovery, batching DoS, alias bomb, gqlmap injection, graphql-cop checklist
-- `tools/lead_board.py` — persistent per-target lead ledger that routes every recon observation to the right `hunt-*` skill and tracks its status so no lead is forgotten (`memory/leads/<target>.jsonl`). `ingest` parses recon output and routes 30+ signal types (IDOR/SSRF/GraphQL/OAuth/SAML/LLM/source-leak/tech-stack/nuclei) to skills; `show` lists untouched-first and flags stale high-priority leads; `next` returns the single top lead; `touch` marks a lead investigating/killed/reported (re-ingest preserves status). See **Critical Rule 6**.
+Master orchestrator is `tools/hunt.py`; `tools/external_arsenal.sh` is the installed-tool registry other scripts source for `_have <tool>`. See `tools/README.md` for the full table (recon/discovery, web3, intelligence, memory/session groups).
 
-### External tool references
-
-- `wordlists/REFERENCES.md` — pointers to SecLists / OneListForAll / fuzz4bounty / PayloadsAllTheThings
-- `skills/security-arsenal/REFERENCES.md` — methodology, writeup archives, dorks, key-verification, AI-security skill repos
-- `skills/security-arsenal/METHODOLOGY_CHEATSHEET.md` — per-vuln quick-check tables distilled from HowToHunt + HolyTips + AllAboutBugBounty + KingOfBugBountyTips
-
-### MCP Integrations (in `mcp/`)
+### MCP integrations (`mcp/`)
 
 - `mcp/burp-mcp-client/` — Burp Suite proxy integration
 - `mcp/hackerone-mcp/` — HackerOne public API (Hacktivity, program stats, policy)
 
-### Hunt Memory (in `memory/`)
+## Authorized-use context
 
-- `memory/pattern_db.py` — cross-target pattern learning
-- `memory/audit_log.py` — request audit log, rate limiter, circuit breaker
-- `memory/rotation.py` — size-based JSONL rotation (10MB cap, keep 3 backups), auto-fired on append
-- `memory/schemas.py` — schema validation for all data
-
-## Start Here
-
-```bash
-claude
-# /recon target.com
-# /hunt target.com
-# /validate   (after finding something)
-# /report     (after validation passes)
-```
-
-## Install Skills
-
-```bash
-chmod +x install.sh && ./install.sh
-```
+Per `TERMS.md` and `rules/hunting.md` Rule 0: this tooling is meant to be operated by an authorized bug bounty hunter against public programs with published safe-harbor terms, only after scope has been confirmed (`/scope` / `tools/scope_checker.py`). Do not weaken or bypass scope-checking, add features aimed at out-of-scope/unauthorized targets, or remove the legal guardrails in `skills/credential-attack/` and `tools/spray_orchestrator.sh` (typed-hostname confirm, lockout warning, audit log, hard stop before live spraying).
 
 ## Critical Rules (Always Active)
 
