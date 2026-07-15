@@ -333,10 +333,19 @@ echo ""
 log_info "Phase 3: Port Scanning"
 
 if command -v nmap &>/dev/null; then
-    log_step "Running nmap (top 1000 ports) on $TARGET..."
-    nmap -sV --top-ports 1000 -T4 --open "$TARGET" \
-        -oN "$RECON_DIR/ports/nmap_results.txt" \
-        -oG "$RECON_DIR/ports/nmap_greppable.txt" 2>/dev/null || true
+    # List mode: $TARGET is just the output-dir label (file basename), not a
+    # scannable host — nmap must read the actual hosts from subdomains/all.txt.
+    if [ "$TARGET_TYPE" = "list" ]; then
+        log_step "Running nmap (top 1000 ports) on $(wc -l < "$RECON_DIR/subdomains/all.txt" 2>/dev/null || echo 0) listed host(s)..."
+        nmap -sV --top-ports 1000 -T4 --open -iL "$RECON_DIR/subdomains/all.txt" \
+            -oN "$RECON_DIR/ports/nmap_results.txt" \
+            -oG "$RECON_DIR/ports/nmap_greppable.txt" 2>/dev/null || true
+    else
+        log_step "Running nmap (top 1000 ports) on $TARGET..."
+        nmap -sV --top-ports 1000 -T4 --open "$TARGET" \
+            -oN "$RECON_DIR/ports/nmap_results.txt" \
+            -oG "$RECON_DIR/ports/nmap_greppable.txt" 2>/dev/null || true
+    fi
     log_done "Nmap scan complete"
 
     # Extract open ports (macOS compatible - no grep -P)
@@ -582,8 +591,45 @@ for f in "$RECON_DIR/live/httpx_full.txt" "$RECON_DIR/js/endpoints.txt" "$RECON_
     fi
 done
 
-# Deduplicate and limit to 5
-GITHUB_ORGS=$(echo "$GITHUB_ORGS" | tr ' ' '\n' | grep -v '^$' | sort -u | head -5)
+# Deduplicate and limit to 20 pre-filter candidates
+GITHUB_ORGS=$(echo "$GITHUB_ORGS" | tr ' ' '\n' | grep -v '^$' | sort -u | head -20)
+
+# ── Ownership gate ──────────────────────────────────────────────────────────
+# A github.com/<user> link can show up in crawled content for all sorts of
+# reasons unrelated to target ownership (an attribution footer, a forum-post
+# credit, an open-source library the target merely uses). Scanning that org's
+# CI/CD workflows would mean testing an unrelated third party who never
+# authorized it — the exact thing scope_checker.py exists to prevent for URLs.
+# GitHub orgs aren't domains so scope_checker.py itself doesn't apply, but we
+# apply the same "deterministic, not just found-somewhere" spirit: only scan
+# an org whose name matches a brand token drawn from the target's own in-scope
+# hostnames (label-wise, so multi-part TLDs like .com.br don't break it).
+_GENERIC_LABELS=" www api admin dev prod live stage test staging app apps web cdn static assets mail smtp ftp blog shop store support help docs status auth login news media img images video "
+BRAND_TOKENS="$(
+    { [ -f "$RECON_DIR/subdomains/all.txt" ] && tr '.' '\n' < "$RECON_DIR/subdomains/all.txt"
+      [ "$TARGET_TYPE" = "domain" ] && echo "$TARGET" | tr '.' '\n'; } \
+    | tr '[:upper:]' '[:lower:]' | awk 'length($0)>=4' | sort -u
+)"
+_org_owned_by_target() {
+    local org_lc="${1,,}" tok
+    [ ${#org_lc} -lt 3 ] && return 1
+    while IFS= read -r tok; do
+        [ -z "$tok" ] && continue
+        case "$_GENERIC_LABELS" in *" $tok "*) continue ;; esac
+        case "$org_lc" in *"$tok"*) return 0 ;; esac
+        case "$tok" in *"$org_lc"*) return 0 ;; esac
+    done <<< "$BRAND_TOKENS"
+    return 1
+}
+FILTERED_ORGS=""
+for ORG in $GITHUB_ORGS; do
+    if _org_owned_by_target "$ORG"; then
+        FILTERED_ORGS="$FILTERED_ORGS $ORG"
+    else
+        log_warn "CI/CD scan: skipping org:$ORG — no brand-token match against in-scope hosts (likely an unrelated third-party org picked up from crawled content)"
+    fi
+done
+GITHUB_ORGS=$(echo "$FILTERED_ORGS" | tr ' ' '\n' | grep -v '^$' | sort -u | head -5)
 
 if [ -n "$GITHUB_ORGS" ] && [ -x "$CICD_SCANNER" ] && command -v sisakulint &>/dev/null; then
     for ORG in $GITHUB_ORGS; do
