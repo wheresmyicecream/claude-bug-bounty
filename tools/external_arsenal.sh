@@ -77,6 +77,11 @@ ARSENAL_TOOLS=(
   "byp4xx|bypass|GOBIN=\$HOME/go/bin go install github.com/lobuhi/byp4xx@latest|github.com/lobuhi/byp4xx"
   "whatwaf|bypass|pipx install whatwaf|github.com/Ekultek/WhatWaf"
   "unwaf|bypass|GOBIN=\$HOME/go/bin go install github.com/mmarting/unwaf@latest|github.com/mmarting/unwaf"
+  # ── HTTP request smuggling / desync ─────────────────────────────────────
+  # Note: default.py ships ~134 mutations per host -- for low-volume/no-
+  # aggressive-fuzzing engagements, run with -c <path-to-minimal-config>
+  # containing just 1-2 canonical mutations instead of the full battery.
+  "smuggler|smuggling|git clone https://github.com/defparam/smuggler ~/tools/smuggler \&\& ln -sf ~/tools/smuggler/smuggler.py \$HOME/go/bin/smuggler|github.com/defparam/smuggler"
   # ── Credential attack / password spray ──────────────────────────────────
   "hashcat|cred|brew install hashcat|hashcat.net/hashcat"
   "cewler|cred|pipx install cewler|github.com/roys/cewler"
