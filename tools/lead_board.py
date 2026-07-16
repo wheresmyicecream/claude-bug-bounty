@@ -53,7 +53,7 @@ ROUTES = [
      "url", "hunt-graphql", P_HIGH, "GraphQL endpoint", "introspection/batching/alias-IDOR -> graphql-audit"),
     (R(r"/(v\d|api|rest)/|/api\b", re.I),
      "url", "hunt-api-misconfig", P_MED, "REST API surface", "auth gaps, mass-assignment, verb tampering"),
-    (R(r"upload|/files?/|attachment|/import\b|avatar|/media/upload|presign", re.I),
+    (R(r"/upload(?:[/?]|$)|/files?/|/attachment(?:[/?]|$)|/import(?:[/?]|$)|/avatar(?:[/?]|$)|/media/upload|/presign", re.I),
      "url", "hunt-file-upload", P_HIGH, "upload surface", "unrestricted upload -> stored XSS/RCE/SSRF"),
     (R(r"[?&](q|s|search|query|keyword|term|name|title|comment|message|desc|content|text|label)=", re.I),
      "url", "hunt-xss", P_MED, "reflected text param", "reflected XSS candidate; check CSP"),
