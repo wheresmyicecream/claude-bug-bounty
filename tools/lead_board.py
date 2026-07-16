@@ -79,7 +79,7 @@ ROUTES = [
      "url", "hunt-source-leak", P_HIGH, "exposed source/artifact", "source map / .git / backup -> secrets+logic"),
     (R(r"/wp-(json|admin|content|login)|xmlrpc\.php", re.I),
      "url", "hunt-misc", P_MED, "WordPress", "plugin CVEs, xmlrpc, user enum"),
-    (R(r"/(chat|completions|assistant|copilot|llm|ai|embeddings|generate|conversation)\b|/v1/(chat|messages)|/mcp\b", re.I),
+    (R(r"/(chat|completions|assistant|copilot|llm|ai|embeddings|generate|conversation)(?:[/?]|$)|/v1/(chat|messages)|/mcp\b", re.I),
      "url", "hunt-llm-ai", P_HIGH, "AI/LLM endpoint", "prompt-injection/exfil -> ai_surface.py + ai_gauntlet.sh"),
     (R(r"webhook|/hook\b|callback_url|notify_url|ping_url", re.I),
      "url", "hunt-ssrf", P_MED, "webhook config", "server-side fetch of user URL -> blind SSRF"),
