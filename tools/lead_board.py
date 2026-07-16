@@ -75,7 +75,7 @@ ROUTES = [
      "url", "hunt-mfa-bypass", P_MED, "MFA surface", "MFA bypass: response-tamper, rate-limit, backup-code"),
     (R(r"wss?://|/ws\b|/socket|/cable|/live\b|/realtime|sockjs", re.I),
      "url", "hunt-websocket", P_MED, "WebSocket", "cross-site WS hijack, origin check, auth-over-WS"),
-    (R(r"\.git\b|/\.env\b|\.svn|\.map(\?|$)|/backup|\.bak\b|\.old\b|\.sql(\?|$)|\.zip(\?|$)|\.tar|/_next/static", re.I),
+    (R(r"\.git\b|/\.env\b|\.svn|\.map(\?|$)|/backup|\.bak\b|\.old\b|\.sql(\?|$)|\.zip(\?|$)|\.tar", re.I),
      "url", "hunt-source-leak", P_HIGH, "exposed source/artifact", "source map / .git / backup -> secrets+logic"),
     (R(r"/wp-(json|admin|content|login)|xmlrpc\.php", re.I),
      "url", "hunt-misc", P_MED, "WordPress", "plugin CVEs, xmlrpc, user enum"),
