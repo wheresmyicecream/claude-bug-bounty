@@ -199,7 +199,7 @@ def gather_recon(recon_dir):
                 "technologies.txt", "**/httpx_full.txt"):
         for f in g(pat):
             hostlines += _read(f)
-    for pat in ("nuclei.txt", "nuclei/*.txt", "**/nuclei.txt"):
+    for pat in ("nuclei.txt", "**/nuclei.txt", "nuclei/findings.jsonl", "**/nuclei/findings.jsonl"):
         for f in g(pat):
             nuclei += _read(f)
     ai = []

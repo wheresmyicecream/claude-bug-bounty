@@ -59,7 +59,10 @@ if _have subjack; then
   log "subjack on $(wc -l < "$INPUT" | tr -d ' ') subdomains..."
   subjack -w "$INPUT" -t 20 -ssl -o "$OUT_DIR/subjack.txt" 2>/dev/null || true
   if [ -s "$OUT_DIR/subjack.txt" ]; then
-    n=$(wc -l < "$OUT_DIR/subjack.txt" | tr -d ' ')
+    # subjack logs every host checked, not just vulnerable ones -- only
+    # "[Vulnerable]" lines are real candidates ("[Not Vulnerable]" also
+    # contains the substring "Vulnerable", so anchor on the bracket).
+    n=$(grep -c '^\[Vulnerable\]' "$OUT_DIR/subjack.txt" 2>/dev/null || echo 0)
     [ "$n" -gt 0 ] && hit "subjack: $n candidate(s)" || ok "subjack: clean"
   fi
 fi
