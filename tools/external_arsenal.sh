@@ -14,7 +14,17 @@
 
 set -uo pipefail
 
-export PATH="$HOME/go/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+# $HOME/go/bin covers Go-installed tools (subfinder, httpx, nuclei, ffuf, ...).
+# $HOME/.cargo/bin covers cargo-installed tools (x8) -- a genuinely fresh
+# shell does NOT have this on PATH by default (cargo only adds it via a
+# ~/.bashrc/~/.profile source line that a non-interactive/non-login script
+# invocation skips), so _have x8 silently failed without this even after a
+# successful `cargo install x8`.
+# $HOME/.local/bin covers pipx-installed tools (arjun, bbot, dnsrecon,
+# cloud_enum, and most of the pip-based entries in ARSENAL_TOOLS below) --
+# same gap, `pipx ensurepath` only edits shell rc files, it doesn't help a
+# script sourcing this file directly.
+export PATH="$HOME/go/bin:$HOME/.cargo/bin:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 # tool|category|install-hint|upstream-url
 ARSENAL_TOOLS=(
