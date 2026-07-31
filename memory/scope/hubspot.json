@@ -1,0 +1,38 @@
+{
+  "program": "hubspot",
+  "platform": "hackerone",
+  "fetched_at": "2026-07-31T19:55:00Z",
+  "source": "mcp/hackerone-mcp/server.py policy hubspot (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [50, 10000],
+  "resolved_report_count": 235,
+  "launched_at": "2025-05-13",
+  "response_efficiency_percentage": 73,
+  "domains": [
+    "*.hubspot.com",
+    "*.hubapi.com",
+    "*.hubspotemail.net",
+    "*.hs-sites.com",
+    "*.hs-sites-eu1.com",
+    "*.hubspotpagebuilder.com",
+    "*.hubspotpagebuilder.eu"
+  ],
+  "other_in_scope_exact_only": [
+    "chatspot.ai",
+    "hubspot.net"
+  ],
+  "excluded_domains": [
+    "connect.com",
+    "shop.hubspot.com",
+    "trust.hubspot.com",
+    "thespot.hubspot.com",
+    "ir.hubspot.com",
+    "events.hubspot.com"
+  ],
+  "critical_policy_notes": [
+    "Subdomain takeover is NOT excluded here (unlike Grindr) -- takeover scanning is viable.",
+    "HIGHEST-VALUE bugs (auth flows: signup/login/MFA/OAuth, cross-portal CRM data leakage, the $15k-$20k CTF challenge) all require creating a HubSpot trial portal and authenticated testing -- explicitly OUT of scope for this hunt per user's no-account/no-auth-testing rule. This pass is CLI-only recon: takeover + config/secrets exposure + cloud buckets + nuclei, nothing requiring a portal account.",
+    "Original structured scope used unusual notation: 'app*.hubspot.com'/'api*.hubspot.com'/'api*.hubapi.com' (prefix wildcards, not standard *.suffix) and '*.hs-sites(-eu1)?.com' (regex-style optional group). Simplified to full *.hubspot.com / *.hubapi.com wildcards justified by the program's own catch-all scope entry ('Other HubSpot-owned (sub)domains not listed as Out of Scope', bounty-eligible) -- and hs-sites(-eu1)?.com split into two separate root domains.",
+    "chatspot.ai and hubspot.net are exact URL-type scope entries, not wildcards -- do not enumerate subdomains under them, check only the exact host."
+  ]
+}
