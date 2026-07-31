@@ -1,0 +1,61 @@
+{
+  "program": "eternal",
+  "platform": "hackerone",
+  "note_company": "Zomato/Blinkit/Hyperpure (Eternal Ltd, India)",
+  "recorded_at": "2026-07-31T14:10:00Z",
+  "source": "user-provided in chat (not yet cross-checked against live HackerOne policy via mcp/hackerone-mcp)",
+  "domains": [
+    "district.in", "*.district.in",
+    "edition.in", "*.edition.in",
+    "eternal.com", "*.eternal.com",
+    "hyperpure.com", "*.hyperpure.com",
+    "insider.in", "*.insider.in",
+    "runnr.in", "*.runnr.in",
+    "ticketnew.com", "*.ticketnew.com",
+    "tktnew.com", "*.tktnew.com",
+    "zdev.net", "*.zdev.net",
+    "zomans.com", "*.zomans.com",
+    "zomato.com", "*.zomato.com",
+    "grofer.io", "*.grofer.io",
+    "grofers.com", "*.grofers.com"
+  ],
+  "other_in_scope_exact_only": [
+    "blinkit.com",
+    "bistro-api.blinkit.com"
+  ],
+  "excluded_domains": [
+    "*.ali.zomans.com",
+    "*.bstro.io",
+    "*.zomatoportugal.com",
+    "*.blinkit.support",
+    "blog.zomato.com",
+    "community.zomato.com",
+    "send.zomato.com",
+    "success.zomato.com"
+  ],
+  "excluded_prefix_glob_patterns": [
+    "staging*.runnr.in (bugbounty.runnr.in is the explicit allowed replacement, NOT excluded)",
+    "dev*.hyperpure.com and staging*.hyperpure.com"
+  ],
+  "policy_notes": [
+    "blinkit.com has NO wildcard grant -- exact host only, do not enumerate subdomains there.",
+    "Prefix-glob exclusions (staging*/dev*) are not expressible by tools/scope_checker.py's exact/*.suffix matcher -- see .private/<program>/scope_check.sh for the regex post-filter workaround, and regenerate it each session since .private/ is gitignored.",
+    "This scope was provided directly by the user in chat, not yet independently verified against Eternal's live HackerOne policy via mcp/hackerone-mcp/server.py -- worth cross-checking if pursuing this program further."
+  ],
+  "recon_history": {
+    "2026-07-30_full_wildcard_sweep": {
+      "domains_scanned": 13,
+      "subdomains_checked_takeover": 891,
+      "takeover_candidates": 0,
+      "result": "all 13 wildcards clean, 5 hypothesis leads killed (see memory/leads/eternal.jsonl)"
+    },
+    "2026-07-31_cloud_recon": {
+      "keywords": ["zomato", "blinkit", "grofers", "hyperpure", "runnr", "eternal", "zomans"],
+      "findings": [
+        "public GCS bucket listing at storage.googleapis.com/zomato (object reads blocked, closed billing account) -- lb-936b72",
+        "AWS Apps SSO portals exist for blinkit/grofers/zomato -- informational, lb-23d635",
+        "runnr.firebaseio.com is OPEN but belongs to an unrelated Toronto/Canada alcohol-delivery company also named Runner/Runnr -- NOT Eternal's asset, do not pursue"
+      ]
+    }
+  }
+}
