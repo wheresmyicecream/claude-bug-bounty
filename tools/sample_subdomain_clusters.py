@@ -23,9 +23,22 @@ Direct children of the root themselves (exactly root_labels + 1 labels, e.g.
 of their own zone's cluster -- if that zone is oversized, they're included in
 the same sampling as their descendants; if not, kept in full either way.
 
+BLIND SPOT the above doesn't cover, found on hubspot's hs-sites.com: a
+per-tenant hosting platform where each customer gets their OWN direct child
+of the root (customer1.hs-sites.com, customer2.hs-sites.com, ... 42,809 of
+them). Every one of these is trivially its own single-member "zone" by the
+above logic (a direct child's zone IS itself), so none look individually
+oversized and the per-zone threshold check never fires -- 42,809 hosts sailed
+through down to 38,670. Zone-based clustering can only catch "many hosts
+under one shared deeper suffix"; it structurally cannot catch "there are
+simply too many distinct direct children". Covered by a final flat cap
+(--max-total) applied after zone-based sampling: if the result is still
+too large, deterministically sample down to that ceiling regardless of
+structure.
+
 Usage:
     python3 tools/sample_subdomain_clusters.py <root-domain> <input> <output> \
-        [--threshold 200] [--sample-size 40]
+        [--threshold 200] [--sample-size 40] [--max-total 2000]
 """
 from __future__ import annotations
 
@@ -44,7 +57,9 @@ def zone_above_root(host: str, root_label_count: int) -> str | None:
     return ".".join(parts[-zone_len:])
 
 
-def sample_clusters(hosts: list[str], root: str, threshold: int, sample_size: int) -> tuple[list[str], list[str]]:
+def sample_clusters(
+    hosts: list[str], root: str, threshold: int, sample_size: int, max_total: int | None = None
+) -> tuple[list[str], list[str]]:
     root_label_count = len(root.split("."))
     clusters: dict[str, list[str]] = defaultdict(list)
     unclustered: list[str] = []
@@ -65,7 +80,17 @@ def sample_clusters(hosts: list[str], root: str, threshold: int, sample_size: in
             report.append(f"{zone}: {len(members)} hosts -> sampled {len(sample)}")
         else:
             kept.extend(members)
-    return sorted(set(kept)), report
+
+    kept = sorted(set(kept))
+
+    # Flat fallback cap: catches explosions zone-based clustering can't (many
+    # distinct direct children, e.g. hs-sites.com's per-tenant hosting).
+    if max_total is not None and len(kept) > max_total:
+        final = kept[:max_total]
+        report.append(f"(flat cap) {len(kept)} hosts remained after zone sampling -> capped to {len(final)}")
+        kept = final
+
+    return kept, report
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,12 +100,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("output", help="Output file for the (possibly sampled) host list")
     parser.add_argument("--threshold", type=int, default=200, help="Cluster size above which sampling kicks in (default: 200)")
     parser.add_argument("--sample-size", type=int, default=40, help="How many hosts to keep per oversized cluster (default: 40)")
+    parser.add_argument("--max-total", type=int, default=2000, help="Hard ceiling applied after zone sampling, catches flat per-tenant explosions zone clustering can't (default: 2000; 0 disables)")
     args = parser.parse_args(argv)
 
     with open(args.input) as f:
         hosts = [line.strip() for line in f if line.strip()]
 
-    kept, report = sample_clusters(hosts, args.root, args.threshold, args.sample_size)
+    max_total = args.max_total if args.max_total > 0 else None
+    kept, report = sample_clusters(hosts, args.root, args.threshold, args.sample_size, max_total)
 
     with open(args.output, "w") as f:
         f.write("\n".join(kept) + ("\n" if kept else ""))
