@@ -77,7 +77,18 @@ if _have subjack; then
     # 404 page). ALWAYS verify the actual CNAME before treating a hit as a
     # real candidate -- see findings/*/TEMPLATE.md 7-Question Gate.
     n=$(grep -vc '^\[Not Vulnerable\]' "$OUT_DIR/subjack.txt" 2>/dev/null || echo 0)
-    [ "$n" -gt 0 ] && hit "subjack: $n candidate(s) -- VERIFY CNAME BEFORE TRUSTING, see comment above" || ok "subjack: clean"
+    if [ "$n" -gt 0 ]; then
+      hit "subjack: $n candidate(s) -- cross-checking CNAME against fingerprint DB..."
+      python3 "$SCRIPT_DIR/verify_takeover_candidates.py" "$OUT_DIR/subjack.txt" 2>/dev/null \
+        | tee "$OUT_DIR/subjack_verified.txt"
+      if grep -qE '^\[(LIKELY REAL|CONFIRM/CLAIM)\]' "$OUT_DIR/subjack_verified.txt" 2>/dev/null; then
+        hit "subjack: genuine candidate(s) survived CNAME cross-check -- see $OUT_DIR/subjack_verified.txt"
+      else
+        ok "subjack: all $n candidate(s) were fingerprint false positives after CNAME verification"
+      fi
+    else
+      ok "subjack: clean"
+    fi
   fi
 fi
 
