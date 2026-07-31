@@ -1,0 +1,30 @@
+{
+  "program": "anduril_industries",
+  "platform": "hackerone",
+  "note_company": "Anduril Industries (defense tech)",
+  "fetched_at": "2026-07-31T18:45:00Z",
+  "source": "mcp/hackerone-mcp/server.py policy anduril_industries (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [50, 25000],
+  "average_bounty_range_usd": [500, 760],
+  "resolved_report_count": 18,
+  "launched_at": "2026-01-20",
+  "response_efficiency_percentage": 97,
+  "domains": [
+    "*.anduril.com",
+    "*.andurildev.com",
+    "*.anduril.dev",
+    "*.andurildev.au",
+    "*.anduril.au",
+    "*.anduril.com.au"
+  ],
+  "excluded_domains": [
+    "andurilgear.com"
+  ],
+  "policy_notes": [
+    "Ask the program team before submitting on unscoped subdomains -- not a testing restriction on the 6 listed wildcards, just applies to submission of out-of-scope findings.",
+    "Program explicitly requests an 'X-HackerOne-Research: [h1 username]' header on all requests -- set via BBHUNT_AUTH_HEADERS for this hunt (user's H1 handle: whereismyicecream).",
+    "Do not exfiltrate data, do not physically approach Anduril facilities/wireless networks (irrelevant to remote recon).",
+    "Very freshly launched program (Jan 2026, only 18 resolved reports total as of this hunt) -- much less picked-over than mature programs, chosen specifically for this reason."
+  ]
+}
