@@ -59,9 +59,15 @@ if [ -n "$KEYWORD" ] && _have s3scanner; then
 fi
 
 # ── Multi-cloud enumeration (cloud_enum) ────────────────────────────────────
+# NOTE: pip-installed cloud_enum doesn't bundle enum_tools/fuzz.txt, so its
+# -m/-b defaults point at a nonexistent path and it exits immediately with
+# "[!] Cannot access mutations/brute-force file" (silently swallowed below by
+# 2>/dev/null, reported as a false "clean"). If you hit that, download
+# https://raw.githubusercontent.com/initstring/cloud_enum/master/enum_tools/fuzz.txt
+# and pass it explicitly via -m/-b.
 if [ -n "$KEYWORD" ] && [ "$S3_ONLY" = "0" ] && _have cloud_enum; then
   log "cloud_enum sweep across AWS/Azure/GCP..."
-  cloud_enum -k "$KEYWORD" -t 5 --disable-aws-disk \
+  cloud_enum -k "$KEYWORD" -t 5 \
     -l "$OUT_DIR/cloud_enum.txt" 2>/dev/null || true
   n=$(wc -l < "$OUT_DIR/cloud_enum.txt" 2>/dev/null | tr -d ' ' || echo 0)
   [ "$n" -gt 0 ] && hit "cloud_enum: $n discoveries — review file" || ok "cloud_enum: clean"
