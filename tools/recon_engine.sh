@@ -528,6 +528,24 @@ if [ -s "$RECON_DIR/live/urls.txt" ]; then
     : > "$RECON_DIR/exposure/config_files.txt"
 
     while IFS= read -r base_url; do
+        # Canary check first: some API gateways/SPAs return HTTP 200 with a
+        # JS/JSON/text content-type for EVERY path, including ones that
+        # don't exist (soft-404). Probe one definitely-fake path per host;
+        # if it also looks "exposed", the whole host is a catch-all and
+        # every real CONFIG_PATHS hit below would be a false positive --
+        # skip this host's config check entirely rather than report noise.
+        # (Observed in practice: click.grofer.io and
+        # api-aicall.aiasst.xiaomi.com both returned 200 + JSON/text for a
+        # random nonexistent path.)
+        CANARY_PATH="/does-not-exist-$RANDOM$RANDOM.js"
+        CANARY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 ${BB_AUTH_ARGS[@]+"${BB_AUTH_ARGS[@]}"} "${base_url}${CANARY_PATH}" 2>/dev/null || echo "000")
+        if [ "$CANARY_STATUS" = "200" ]; then
+            CANARY_CONTENT_TYPE=$(curl -sI --max-time 5 ${BB_AUTH_ARGS[@]+"${BB_AUTH_ARGS[@]}"} "${base_url}${CANARY_PATH}" 2>/dev/null | grep -i content-type | head -1)
+            if echo "$CANARY_CONTENT_TYPE" | grep -qiE '(javascript|json|text/plain)'; then
+                continue
+            fi
+        fi
+
         for path in "${CONFIG_PATHS[@]}"; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 ${BB_AUTH_ARGS[@]+"${BB_AUTH_ARGS[@]}"} "${base_url}${path}" 2>/dev/null || echo "000")
             if [ "$STATUS" = "200" ]; then
@@ -535,7 +553,7 @@ if [ -s "$RECON_DIR/live/urls.txt" ]; then
                 # Only flag if it returns JS/JSON/text (not HTML error pages)
                 if echo "$CONTENT_TYPE" | grep -qiE '(javascript|json|text/plain)'; then
                     echo "[EXPOSED] ${base_url}${path}" >> "$RECON_DIR/exposure/config_files.txt"
-                    log_vuln "Config exposed: ${base_url}${path}"
+                    log_warn "Config exposed: ${base_url}${path}"
                 fi
             fi
         done
