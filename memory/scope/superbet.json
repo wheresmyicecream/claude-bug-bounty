@@ -1,0 +1,41 @@
+{
+  "program": "superbet",
+  "platform": "hackerone",
+  "note_company": "Superbet (multi-brand sports betting/casino group: Superbet RO/RS/PL/GR/BR, Napoleon BE casino/dice/games/sports, LuckyDays, SpinAway)",
+  "fetched_at": "2026-08-01T00:00:00Z",
+  "source": "mcp/hackerone-mcp/server.py get_program_policy/get_program_stats superbet (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [100, 10000],
+  "average_bounty_range_usd": [300, 500],
+  "resolved_report_count": 128,
+  "launched_at": "2022-12-22",
+  "response_efficiency_percentage": 95,
+  "state": "public_mode",
+  "wildcards_bounty_eligible": [
+    "*.superbet.ro", "*.superbet.rs", "*.superbet.com", "*.superbet.pl", "*.superbet.gr",
+    "*.spinaway.com", "*.luckydays.com", "*.luckydays.ca",
+    "*.napoleoncasino.be", "*.napoleondice.be", "*.napoleongames.be", "*.napoleonsports.be",
+    "*.happening.dev"
+  ],
+  "excluded_no_bounty": [
+    "*.epic.superbet.ro", "legacy-web.superbet.ro", "affiliates.superbet.com", "affiliates.superbet.rs",
+    "affiliate.napoleongames.be", "retail.prod.incubator.superbet.ro", "surveys.superbet.com",
+    "lp.superbet.pl", "lp.superbet.ro", "lp.superbet.com", "lp.superbet.rs", "lp.superbet.bet.br",
+    "test.epic.superbet.ro", "test-gw.epic.superbet.ro", "abc.superbet.rs", "afiliados.superbet.com"
+  ],
+  "key_takeover_note": "SUBDOMAIN TAKEOVER IS EXPLICITLY BOUNTY-ELIGIBLE ($500 flat unless additional impact). S3-bucket takeovers are TEMPORARILY out of scope. This makes takeover the primary target here -- 13 multi-brand acquired wildcards = high odds of dangling DNS. Our takeover_scanner + verify_takeover_candidates pipeline is the right tool. Employee working-credentials leak = $250.",
+  "critical_constraints": [
+    "MUST send 'User-Agent: hackerone' header on ALL automated tools/scripts -- their SOC blocks requests without it. Set via BBHUNT_AUTH_HEADERS.",
+    "Max 50 requests/second -- keep BB_RATE_LIMIT <= 50 (using 40 to be safe).",
+    "NO scanners (Nessus, Acunetix, etc.) -- vulns found by scanners are NOT rewarded. Skip nuclei full-scan; our value is manual-verified takeover/DNS/config, not scanner output.",
+    "ALL LOGIN services are OUT OF SCOPE. No brute-force on login = instant ban. We do neither (recon-only, no auth).",
+    "IDOR/BAC on SOCIAL functionality is out of scope.",
+    "Do not discuss vulnerabilities outside the program (confidentiality) -- scope config in memory/ (public info), findings detail in .private/."
+  ],
+  "policy_notes": [
+    "Public program. Main app testing (superbet.ro/magicjackpot.ro) needs a Romanian account+VPN -- not doing (no-account rule, recon-only).",
+    "3rd-party vulns generally not rewarded -- report upstream. Relevant since multi-brand infra has lots of shared 3rd-party components.",
+    "Out of scope also: clickjacking (no sensitive action), CSRF unauth, MITM, known-vuln-libs w/o PoC, CSV injection, SSL/TLS best-practice, DoS, content spoofing, rate-limit on non-auth, missing headers/CSP/cookie flags, SPF/DKIM/DMARC, version/banner disclosure, open redirect w/o impact, user/email enum, self-XSS, CORS w/o PoC, HTTP-only login page.",
+    "SLA: first response 1 business day, triage 2, bounty 14 -- responsive program."
+  ]
+}
