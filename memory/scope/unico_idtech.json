@@ -1,0 +1,63 @@
+{
+  "program": "unico_idtech",
+  "platform": "hackerone",
+  "note_company": "Unico IDtech (Brazilian biometric identity/KYC/liveness-detection SaaS)",
+  "fetched_at": "2026-08-01T00:00:00Z",
+  "source": "mcp/hackerone-mcp/server.py get_program_policy/get_program_stats unico_idtech (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [150, 10000],
+  "average_bounty_range_usd": [500, 500],
+  "resolved_report_count": 26,
+  "launched_at": "2026-01-13",
+  "response_efficiency_percentage": 94,
+  "wildcards": [
+    "*.uat.unico.app"
+  ],
+  "exact_urls": [
+    "accountshomolog.acesso.io",
+    "identityhomolog.acesso.io",
+    "backend-sdk.uat.private.unico.run",
+    "idpay-uat.unico.io",
+    "issuer.idpay-uat.unico.io",
+    "idcash-uat.unico.io",
+    "openfinance.unico.io",
+    "secure.unico.io",
+    "unico.io",
+    "https://sdk-h1.unico.io/createprocess",
+    "blog.unico.io",
+    "devcenter.unico.io"
+  ],
+  "excluded_not_submission_eligible": [
+    "*.cadastro.uat.unico.app",
+    "uconf.uat.unico.app"
+  ],
+  "excluded_vuln_classes": [
+    "Domain/Subdomain takeover",
+    "Clickjacking on pages with no sensitive actions",
+    "CSRF on unauthenticated forms or forms without confidential actions",
+    "Rate limiting/brute force on unauthenticated endpoints",
+    "Missing security headers / CSP / HttpOnly / Secure cookie flags",
+    "SSL/TLS best-practice issues",
+    "SPF/DKIM/DMARC",
+    "Version/banner disclosure, descriptive error messages/stack traces",
+    "Open redirect without additional demonstrated impact",
+    "Self-XSS / DOM XSS without clear impact",
+    "Vulnerable libraries without functional PoC",
+    "File upload without impact/execution",
+    "CSV injection without demonstrated vulnerability",
+    "DoS/service disruption",
+    "MITM or physical-device-access-required attacks",
+    "Content/privacy-policy discrepancies (route to Unico's DPO instead)",
+    "Broken links/typos/content issues on static/marketing pages"
+  ],
+  "policy_notes": [
+    "Two distinct scopes: PRIMARY = Liveness (biometric presentation-attack bypass -- Photo/Video-Replay/3D-Mask/Deepfake attacks against the SDK, must achieve 'live:true'). SECONDARY = Web (standard XSS/RCE/SQLi/SSRF/JWT/IDOR/file-upload classes on the URL list above).",
+    "Liveness scope requires PHYSICAL mobile devices (Android/iOS) or a browser with camera access -- mobile apps explicitly do NOT work on emulators/simulators. Not pursuing this scope from this sandboxed environment; would need the user's own phone/camera, out of this session's recon-only remit.",
+    "Liveness reports must include Transaction ID + Process ID; testing focuses on the biometric SDK/engine, NOT the wrapper test apps (wrapper/presentation-layer issues explicitly out of scope).",
+    "Web scope IDOR requires 'accessing confidential information from another user/organization' -- needs an authenticated account context to demonstrate; most of Web scope realistically needs authenticated testing beyond what this pass can do without an account (per user's standing no-account-creation rule).",
+    "Program explicitly requests 'X-HackerOne-Research: [H1 username]' AND 'User-Agent: [H1 username]' headers on all requests.",
+    "Employees/former employees/first-degree relatives/third parties with confidential access are excluded from participating (not relevant to us).",
+    "Extremely fresh -- launched Jan 2026, only 26 resolved reports as of this hunt.",
+    "Given the narrow Web scope (mostly exact URLs, not broad wildcards) and heavy exclusion list (no takeover, no version/banner disclosure, no header/TLS hygiene), the realistic unauthenticated-recon angle is narrower than prior programs: DNS private-IP disclosure sweep (not excluded) and cloud/bucket enum (not excluded) are the best-fit passive techniques; standard config-exposure/secrets-in-JS checks also still apply."
+  ]
+}
