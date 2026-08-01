@@ -1,0 +1,80 @@
+{
+  "program": "wolt",
+  "platform": "hackerone",
+  "note_company": "Wolt (food/goods delivery, Helsinki-based, owned by DoorDash)",
+  "fetched_at": "2026-08-01T00:00:00Z",
+  "source": "mcp/hackerone-mcp/server.py get_program_policy/get_program_stats wolt (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [100, 3500],
+  "average_bounty_range_usd": [0, 0],
+  "resolved_report_count": 0,
+  "launched_at": "2026-07-27",
+  "response_efficiency_percentage": 100,
+  "state": "public_mode",
+  "freshness_caveat": "0 resolved reports on HackerOne (listed 2026-07-27, ~5 days old) BUT the policy carries a 'Legacy Hall of Fame' of ~100 researchers who previously reported on Intigriti. So this is NOT a virgin program -- the H1 listing is new, the target has been hunted for years elsewhere. Adjust expectations accordingly.",
+  "wildcards": [
+    "*.wolt.com"
+  ],
+  "exact_urls_high_value": [
+    "authentication.wolt.com -- OAuth2/OIDC/JWT, signs JWTs that grant access to other services (CROWN JEWEL)",
+    "corporate.wolt.com -- admin portal for corporate customers, regular-user JWT should grant limited access",
+    "drive.wolt.com -- admin portal for last-mile delivery partners",
+    "merchant.wolt.com -- store-manager portal for menus",
+    "ops.wolt.com -- EMPLOYEE-ONLY endpoints, policy explicitly says 'if you can show otherwise that'll be very interesting'",
+    "restaurant-api.wolt.com -- core API: create/edit users, place/track orders, set prices",
+    "wolt.com -- main web app"
+  ],
+  "mobile_apps": [
+    "GOOGLE_PLAY com.wolt.android -- customer app",
+    "GOOGLE_PLAY com.wolt.courierapp -- COURIER app (no courier accounts available -- policy: 'very interesting if you can interact with courier APIs without a courier account')",
+    "APPLE_STORE 943905271 -- customer iOS",
+    "APPLE_STORE 1477299281 -- courier iOS"
+  ],
+  "excluded_not_submission_eligible": [
+    "gettest.wolt.com",
+    "wolt.atlassian.net",
+    "press.wolt.com (third-party SaaS)",
+    "links.wolt.com",
+    "blog.wolt.com (third-party wpengine WordPress -- WordPress-level probes only, but not submission-eligible)"
+  ],
+  "excluded_vuln_classes": [
+    "Leaked human credentials from third-party datasets",
+    "Testing payment processors",
+    "Spam / social engineering / physical intrusion",
+    "ANY interaction with Customer Support staff (humans -- forbidden)",
+    "Network DoS/DDoS, Web Cache Poisoned DoS",
+    "Brute force attacks",
+    "Attacks requiring access to victim's device",
+    "Out-of-date software without PoC",
+    "Mass creation of entities (accounts/profiles/applications)",
+    "GATEKEEPER_API_KEY exposure (explicitly not a secret)",
+    "API key disclosure without proven business impact",
+    "Signup with unverified mobile numbers (UNLESS you took over an existing number -- that IS a finding)",
+    "Verbose messages/dir listings without sensitive info",
+    "CORS without proven impact",
+    "Missing cookie flags / security headers",
+    "CSRF without proven impact",
+    "Rate-limit bypass or absence",
+    "Best-practice violations (password policy etc.)",
+    "Clickjacking without proven impact",
+    "CSV injection",
+    "Session not invalidated (logout/2FA)",
+    "Username/email enumeration",
+    "Email bombing",
+    "HTTP request smuggling without proven impact",
+    "Homograph attacks",
+    "Banner grabbing / version disclosure",
+    "Subdomain takeover WITHOUT proof (WITH proof IS in scope -- always verify via CNAME)",
+    "Arbitrary file upload without proof",
+    "Host header injection without proven business impact",
+    "Mobile: clipboard link leakage, malicious-app-preinstall attacks, TLS-protected data in URLs, lack of obfuscation, path disclosure, missing jailbreak/root detection, malformed URL scheme crashes, missing anti-debug/SSL-pinning, snapshot/pasteboard leakage, jailbreak-only runtime exploits"
+  ],
+  "policy_notes": [
+    "Public program, no confidentiality clause (standard responsible disclosure) -> tracked in memory/.",
+    "MUST add 'X-HackerOne-Research: [H1 username]' header to ALL requests -- testing without it can forfeit the bounty.",
+    "Test entities provided: consumer test account user_id=670fa3e9ead6e49d65cc3614, venue test venue_id=670e7897e3c56dcc5b5a0989. Only interact with THESE / your own accounts -- never real restaurants/venues/merchants/users.",
+    "Self-registration IS allowed by the program, but our standing rule = no account creation by the agent. This limits authenticated testing (corporate/drive/merchant admin JWT-access angles need an account). Focus on unauthenticated angles.",
+    "BEST unauthenticated-compatible angles given no-account constraint: (1) courier API access without a courier account -- extract endpoints from com.wolt.courierapp APK, probe unauthenticated; (2) ops.wolt.com employee-only endpoints reachable externally; (3) standard recon: takeover-with-proof, private-IP DNS sweep, cloud_enum, JS secret/config exposure.",
+    "Keep reports 300-400 words per program request."
+  ]
+}
