@@ -1,0 +1,28 @@
+{
+  "program": "playtika",
+  "platform": "hackerone",
+  "note_company": "Playtika (mobile/social gaming conglomerate; owns Slotomania, Bingo Blitz, Caesars Games, House of Fun, WSOP, Wooga, Seriously/Best Fiends, Redecor, Board Kings, Monopoly Poker)",
+  "fetched_at": "2026-08-02T00:00:00Z",
+  "source": "mcp/hackerone-mcp get_program_policy/get_program_stats playtika",
+  "offers_bounties": true,
+  "bounty_range_usd": [100, 5000],
+  "response_efficiency_percentage": 96,
+  "state": "public_mode",
+  "wildcards": [
+    "*.slotomania.com","*.playtika.com","*.bingoblitz.com","*.caesarsgames.com",
+    "*.boardkingsgame.com","*.houseoffun.com","*.playwsop.com","*.serious.li",
+    "*.wooga.com","*.redecor.com","*.seriously.com","*.monopoly-poker.com","*.playticorp.com"
+  ],
+  "exact_urls": ["gnocchi-www.buffalo-ggn.net","bestfiends.com"],
+  "critical_constraints": [
+    "MUST send header 'X-Bug-Bounty: True' on all requests.",
+    "No scanners that generate significant traffic volume.",
+    "DoS out of scope; keep rate limits gentle."
+  ],
+  "policy_notes": [
+    "Public program, no confidentiality clause -> memory/ ok.",
+    "Takeover not explicitly excluded -> eligible WITH proof (CNAME-verify always).",
+    "Acquired multi-brand gaming infra = high odds of dangling DNS / forgotten assets (Superbet-shaped).",
+    "Out of scope: 3rd-party product bugs, brute force/rate-limit w/o vector, user enum w/o PII, clickjacking no-sensitive, CSRF unauth, MITM, known-vuln-libs w/o PoC, CSV injection w/o vuln, SSL/TLS best-practice/HSTS, DoS, content spoofing, missing headers/cookie flags w/o PoC, mobile insecure storage / deep-link crash / missing SSL-pinning w/o PoC, SPF/DKIM/DMARC."
+  ]
+}
