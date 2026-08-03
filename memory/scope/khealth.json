@@ -1,0 +1,12 @@
+{
+  "program":"khealth","platform":"hackerone","note_company":"K Health (telehealth; also powers virtual-care portals for Mayo, Penn Medicine, Northwell, Hartford, Novant, Hackensack Meridian)",
+  "offers_bounties":true,"bounty_range_usd":[100,5000],"average_bounty_range_usd":[200,200],"state":"public_mode","launched_at":"2024-09-10","response_efficiency_percentage":78,
+  "wildcards":["*.khealth.com","*.hhc247.org","*.khealth-test.com","*.csconnect.org","*.mgbcareconnect.org","*.northwellprimarycarenow.com","*.hmh247.org","*.primarycareondemand.mayoclinic.org","*.novanthealthvirtualprimarycare.org","*.pennmedicine.connect-visit.com"],
+  "critical_constraints":[
+    "MUST append '(h1)' to User-Agent on ALL requests (e.g. 'Mozilla/5.0 (h1)') -- required to separate hacker traffic.",
+    "HEALTH DATA -- 'search for bugs, not user data'. Endpoint-existence/status checks ONLY, never access patient data.",
+    "Register with <username>@wearehackerone.com if any account (not doing -- unauth only)."
+  ],
+  "out_of_scope":["Subdomain takeover (across org)","Exposed staging environments across org","Public Segment write keys","API keys in mobile package (APK/IPA)","DoS/latency","Brute-force","Clickjacking no-sensitive","Insecure client storage non-sensitive","Coupons/discounts","SPF/DKIM/DMARC","XML-RPC","Exported service w/o perms","target=_blank","Missing headers (HSTS/Referrer-Policy/etc.)","TLS cert expiry","User enumeration","Unencrypted sensitive data storage","Self-attacks","Rate-limiting"],
+  "policy_notes":["Takeover AND staging-env-exposure both out of scope -> our usual unauth classes largely excluded. Viable: genuine sensitive data/config exposure with impact, exposed admin panel with real access, open cloud bucket WITH data, SSRF, injection, actuator/graphql/source-leak. Deep-pass focus, no takeover.","Partner healthcare domains = high sensitivity + high dup risk; K Health's own khealth.com/khealth-test.com fresher."]
+}
