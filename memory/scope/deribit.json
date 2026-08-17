@@ -1,0 +1,59 @@
+{
+  "program": "deribit",
+  "platform": "hackerone",
+  "note_company": "Deribit (crypto options/futures derivatives exchange)",
+  "fetched_at": "2026-08-01T00:00:00Z",
+  "source": "mcp/hackerone-mcp/server.py get_program_policy/get_program_stats deribit (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [50, 50000],
+  "average_bounty_range_usd": [200, 250],
+  "resolved_report_count": 46,
+  "launched_at": "2022-10-18",
+  "response_efficiency_percentage": 91,
+  "state": "public_mode",
+  "wildcards": [
+    "*.deribit.com"
+  ],
+  "exact_urls": [
+    "test.deribit.com",
+    "insights.deribit.com",
+    "pb.deribit.com"
+  ],
+  "excluded_not_submission_eligible": [
+    "*.chattest.deribit.com",
+    "deribit.zendesk.com",
+    "office.deribit.com",
+    "trust.deribit.com",
+    "support.deribit.com"
+  ],
+  "excluded_vuln_classes": [
+    "Zendesk (entirely)",
+    "account:read_write API key upgrade to higher privilege -- intended behavior",
+    "Clickjacking on Tier 2 targets",
+    "SPF/DMARC misconfiguration",
+    "Deribit open source projects",
+    "Social engineering of staff/contractors",
+    "Banner grabbing / low-sensitivity info disclosure",
+    "Hypothetical/best-practice issues without exploitable PoC",
+    "Automated-tool reports without a PoC",
+    "Missing security headers",
+    "SSL/TLS best-practice issues",
+    "Vulns requiring root/jailbreak",
+    "Password policy",
+    "Rate limiting (none/too lax)",
+    "WordPress CORS/xmlrpc/user-enum/DoS",
+    "Broken links",
+    "MITM or physical-device-access-required attacks",
+    "Content spoofing/text injection without demonstrated HTML/CSS modification",
+    "Missing HttpOnly/Secure cookie flags",
+    "Customer creds found on darknet/forums not caused by Deribit",
+    "Employee API keys that only work on test env (production ones ARE in scope)"
+  ],
+  "critical_constraint": "TESTING DIRECTLY ON www.deribit.com MAKES YOU INELIGIBLE FOR BOUNTY AND DISALLOWED FROM FURTHER HUNTING -- far more severe than a typical N/A. All active testing MUST happen on test.deribit.com. Live production (*.deribit.com generally) is only in scope for wallet & balance functionality specifically -- everything else must be validated on test first, then explicit authorization requested via an open ticket before touching live.",
+  "policy_notes": [
+    "Conservative approach adopted for this hunt given the severity of the live-testing penalty: passive DNS-only enumeration (subfinder, cert-transparency) is fine across *.deribit.com since it doesn't touch Deribit's own infrastructure. Active HTTP probing (httpx, any request that hits their servers) is restricted to test.deribit.com + the 2 named exact URLs (insights.deribit.com, pb.deribit.com) only. No takeover scanning across the general wildcard.",
+    "Outdated-component reports need a CVE-age waiting period before eligible (24h-30d depending on tier/severity) -- not directly actionable for a one-off recon pass, noted for awareness.",
+    "Public program, no confidentiality/private-program clause beyond standard responsible-disclosure ask.",
+    "Mobile apps in scope (Google Play com.deribit, App Store 1293674041) -- static APK analysis (Huawei AppGallery download method that worked for Banco Plata) could be attempted if useful, no account/device needed for static-only pass."
+  ]
+}

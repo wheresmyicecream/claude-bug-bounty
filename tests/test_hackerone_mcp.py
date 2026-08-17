@@ -103,11 +103,11 @@ class TestSearchDisclosedReports:
                     "name": "Example Corp",
                     "handle": "example-corp",
                     "offers_bounties": True,
-                    "default_currency": "USD",
-                    "base_bounty": 100,
+                    "currency": "usd",
+                    "minimum_bounty_table_value": 100,
+                    "maximum_bounty_table_value": 5000,
                     "resolved_report_count": 250,
-                    "average_time_to_bounty_awarded": 14,
-                    "average_time_to_first_program_response": 3,
+                    "response_efficiency_percentage": 90,
                 }
             }
         }

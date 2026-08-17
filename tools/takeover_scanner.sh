@@ -59,11 +59,36 @@ if _have subjack; then
   log "subjack on $(wc -l < "$INPUT" | tr -d ' ') subdomains..."
   subjack -w "$INPUT" -t 20 -ssl -o "$OUT_DIR/subjack.txt" 2>/dev/null || true
   if [ -s "$OUT_DIR/subjack.txt" ]; then
-    # subjack logs every host checked, not just vulnerable ones -- only
-    # "[Vulnerable]" lines are real candidates ("[Not Vulnerable]" also
-    # contains the substring "Vulnerable", so anchor on the bracket).
-    n=$(grep -c '^\[Vulnerable\]' "$OUT_DIR/subjack.txt" 2>/dev/null || echo 0)
-    [ "$n" -gt 0 ] && hit "subjack: $n candidate(s)" || ok "subjack: clean"
+    # BUG FIX (was checking for a literal "[Vulnerable]" label that this
+    # subjack version never prints -- see output.go's printResult(): a
+    # candidate line is "[SERVICE_NAME] host" (e.g. "[GITHUB] foo.example.com",
+    # "[DOMAIN AVAILABLE - x.com] host"), and a clean host is
+    # "[Not Vulnerable] host". The old `grep -c '^\[Vulnerable\]'` matched
+    # NEITHER format and silently always printed "clean" regardless of what
+    # subjack actually found. Fixed by counting everything that ISN'T the
+    # "[Not Vulnerable]" line.
+    #
+    # NOTE: subjack's live-host fingerprint match (identify() in
+    # fingerprint.go) only checks whether the HTTP response body CONTAINS a
+    # generic string (e.g. "page not found") -- it does NOT verify the CNAME
+    # actually points to the claimed third-party service. This produces real
+    # false positives (seen in practice: Xiaomi/Eternal hosts on their own
+    # infra flagged as "[UPTIMEROBOT]"/"[GEMFURY]" for having an ordinary
+    # 404 page). ALWAYS verify the actual CNAME before treating a hit as a
+    # real candidate -- see findings/*/TEMPLATE.md 7-Question Gate.
+    n=$(grep -vc '^\[Not Vulnerable\]' "$OUT_DIR/subjack.txt" 2>/dev/null || echo 0)
+    if [ "$n" -gt 0 ]; then
+      hit "subjack: $n candidate(s) -- cross-checking CNAME against fingerprint DB..."
+      python3 "$SCRIPT_DIR/verify_takeover_candidates.py" "$OUT_DIR/subjack.txt" 2>/dev/null \
+        | tee "$OUT_DIR/subjack_verified.txt"
+      if grep -qE '^\[(LIKELY REAL|CONFIRM/CLAIM)\]' "$OUT_DIR/subjack_verified.txt" 2>/dev/null; then
+        hit "subjack: genuine candidate(s) survived CNAME cross-check -- see $OUT_DIR/subjack_verified.txt"
+      else
+        ok "subjack: all $n candidate(s) were fingerprint false positives after CNAME verification"
+      fi
+    else
+      ok "subjack: clean"
+    fi
   fi
 fi
 

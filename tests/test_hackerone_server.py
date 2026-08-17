@@ -143,6 +143,10 @@ class TestGetProgramStats:
 
     @patch("server._graphql_request")
     def test_returns_stats(self, mock_gql):
+        # Field names verified against HackerOne's live GraphQL schema via
+        # introspection (`{ __type(name: "Team") { fields { name } } }`) --
+        # default_currency/average_time_to_bounty_awarded/
+        # average_time_to_first_program_response don't exist on Team.
         mock_gql.return_value = {
             "data": {
                 "team": {
@@ -150,13 +154,17 @@ class TestGetProgramStats:
                     "handle": "acme",
                     "url": "https://hackerone.com/acme",
                     "offers_bounties": True,
-                    "default_currency": "USD",
-                    "base_bounty": 500,
+                    "currency": "usd",
+                    "minimum_bounty_table_value": 100,
+                    "maximum_bounty_table_value": 5000,
+                    "average_bounty_lower_amount": 500,
+                    "average_bounty_upper_amount": 500,
                     "resolved_report_count": 100,
-                    "average_time_to_bounty_awarded": 14,
-                    "average_time_to_first_program_response": 2,
+                    "first_response_time": None,
+                    "response_efficiency_percentage": 80,
                     "launched_at": "2020-01-01T00:00:00Z",
                     "state": "public_mode",
+                    "submission_state": "open",
                 }
             }
         }
@@ -164,8 +172,9 @@ class TestGetProgramStats:
         stats = get_program_stats("acme")
         assert stats["program"] == "acme"
         assert stats["offers_bounties"] is True
-        assert stats["base_bounty"] == 500
+        assert stats["bounty_range"] == [100, 5000]
         assert stats["resolved_reports"] == 100
+        assert stats["response_efficiency_percentage"] == 80
 
     @patch("server._graphql_request")
     def test_program_not_found(self, mock_gql):

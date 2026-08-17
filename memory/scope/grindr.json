@@ -1,0 +1,45 @@
+{
+  "program": "grindr",
+  "platform": "hackerone",
+  "fetched_at": "2026-07-31T19:35:00Z",
+  "source": "mcp/hackerone-mcp/server.py policy grindr (public GraphQL API)",
+  "offers_bounties": true,
+  "bounty_range_usd": [100, 4000],
+  "average_bounty_range_usd": [250, 250],
+  "resolved_report_count": 114,
+  "launched_at": "2023-02-23",
+  "response_efficiency_percentage": 72,
+  "domains": [
+    "*.grindr.io",
+    "*.grindr.com",
+    "*.grindr.mobi"
+  ],
+  "other_in_scope_exact_only": [
+    "web.grindr.com"
+  ],
+  "excluded_domains": [
+    "*.dev.grindr.io",
+    "*.dev2.grindr.io",
+    "preprod1.grindr.com",
+    "*.intomore.com",
+    "*.grindrads.com",
+    "selfservice.grindr.com",
+    "go.grindr.com",
+    "grindr.atlassian.net",
+    "blog.grindr.com",
+    "help.grindr.com",
+    "grindrbloop.com",
+    "shop.grindrbloop.com",
+    "kindr.grindr.com",
+    "shop.grindr.com",
+    "investors.grindr.com",
+    "grindrtogo.grindr.com",
+    "status.grindr.com"
+  ],
+  "critical_policy_notes": [
+    "SUBDOMAIN TAKEOVER IS EXPLICITLY NON-QUALIFYING/OUT-OF-SCOPE for this program ('Outdated DNS entries or Subdomain Takeover' listed under out-of-scope items). Do NOT run takeover-focused scanning here -- pivoted to config-exposure/cloud-bucket/nuclei-CVE recon instead, per user decision.",
+    "dev.grindr.io / dev2.grindr.io / preprod1.grindr.com are submission-eligible but NOT bounty-eligible -- excluded from active scan focus (not worth resources for non-paying targets).",
+    "Handles very sensitive PII (private chats/media, location beyond normal app use) -- their severity table weighs this heavily. Extra care required on anything touching user data, even hypothetically.",
+    "High severity class per their table: 'API Disclosure of sensitive or personal information without expected access control' -- this is the realistic CLI-only, unauthenticated target class given user's no-auth-testing constraint."
+  ]
+}

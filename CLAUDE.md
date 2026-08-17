@@ -41,7 +41,7 @@ bash tests/test_cicd_scanner.sh                  # shell-based test (not pytest 
 
 **Multi-harness install.** `install.sh --agent <target>` copies/symlinks `skills/`, `commands/`, `agents/` into the right location per harness (`~/.claude/`, `~/.config/opencode/`, `~/.pi/agent/`, `~/.codex/`, `~/.agents/skills`, or installs the standalone `bughunter` binary). `CLAUDE.md` is the Claude Code manifest; `AGENTS.md` is the equivalent for the other harnesses — keep the skill/command/agent counts and tables in sync between the two when either changes.
 
-### Skills (13 domains — load with `/bug-bounty`, `/web2-recon`, `/token-scan`, etc.)
+### Skills (13 core domains — load with `/bug-bounty`, `/web2-recon`, `/token-scan`, etc.)
 
 | Skill | Domain |
 |---|---|
@@ -58,6 +58,22 @@ bash tests/test_cicd_scanner.sh                  # shell-based test (not pytest 
 | `skills/mobile-pentest/` | Android/iOS app pentest — runtime-first proxy workflow, APK/IPA decompile, deeplink/exported-activity injection, WebView bridge, SSL pinning bypass |
 | `skills/cicd-security/` | CI/CD pipeline hunting — GitHub Actions injection, secret exfil, self-hosted runner poisoning, OIDC abuse, supply chain attacks |
 | `skills/graphql-audit/` | GraphQL hunting — introspection, field suggestions, batching DoS, IDOR via aliasing, injection, auth bypass, depth bombs |
+
+### Vendored per-class + enterprise skills (71, from elementalsouls/Claude-BugHunter, MIT)
+
+`tools/lead_board.py`'s routing table names 34 `hunt-*` skills (`hunt-oauth`,
+`hunt-idor`, `hunt-sqli`, etc.) that had no matching skill directory in this
+repo — every recon-discovered lead was being routed to a skill that didn't
+exist. Fixed by vendoring the matching skills (all 57 `hunt-*` skills, one
+per bug class) plus 14 non-overlapping skills covering enterprise IdP/VPN/
+hypervisor attack surface (`m365-entra-attack`, `okta-attack`,
+`enterprise-vpn-attack`, `vmware-vcenter-attack`), cloud IAM post-credential
+escalation (`cloud-iam-deep`), mobile pipelines (`apk-redteam-pipeline`,
+`ios-redteam-pipeline`), OSINT (`offensive-osint`, `osint-methodology`,
+`recon-scope-triage`), and reporting extras (`bugcrowd-reporting`,
+`evidence-hygiene`, `redteam-mindset`, `mid-engagement-ir-detection`). Full
+provenance, review notes, and what was deliberately left out (duplicates,
+non-applicable content) in `skills/THIRD_PARTY_NOTICES.md`.
 
 ### Commands (27 slash commands, in `commands/`)
 

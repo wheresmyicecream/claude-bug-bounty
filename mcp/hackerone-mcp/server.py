@@ -170,6 +170,14 @@ def get_program_stats(program: str) -> dict:
     Returns:
         Dict with bounty info, response times, resolved counts.
     """
+    # NOTE: the field names below were verified by introspecting HackerOne's
+    # live GraphQL schema (`{ __type(name: "Team") { fields { name } } }`) --
+    # the previous version used default_currency/average_time_to_bounty_awarded/
+    # average_time_to_first_program_response, none of which exist on Team
+    # (HackerOne's schema evidently changed since this was written). Verified
+    # minimum/maximum_bounty_table_value and response_efficiency_percentage
+    # against the exact numbers HackerOne's own UI displays for a program
+    # (e.g. grindr: $100-$4000, 72% -- matched exactly).
     safe_program = program.replace('"', '\\"')
     query = f"""{{
       team(handle: "{safe_program}") {{
@@ -177,13 +185,17 @@ def get_program_stats(program: str) -> dict:
         handle
         url
         offers_bounties
-        default_currency
-        base_bounty
+        currency
+        minimum_bounty_table_value
+        maximum_bounty_table_value
+        average_bounty_lower_amount
+        average_bounty_upper_amount
         resolved_report_count
-        average_time_to_bounty_awarded
-        average_time_to_first_program_response
+        first_response_time
+        response_efficiency_percentage
         launched_at
         state
+        submission_state
       }}
     }}"""
 
@@ -197,13 +209,15 @@ def get_program_stats(program: str) -> dict:
         "name": team.get("name", ""),
         "url": team.get("url", ""),
         "offers_bounties": team.get("offers_bounties", False),
-        "currency": team.get("default_currency", "USD"),
-        "base_bounty": team.get("base_bounty"),
+        "currency": team.get("currency", "usd"),
+        "bounty_range": [team.get("minimum_bounty_table_value"), team.get("maximum_bounty_table_value")],
+        "average_bounty_range": [team.get("average_bounty_lower_amount"), team.get("average_bounty_upper_amount")],
         "resolved_reports": team.get("resolved_report_count"),
-        "avg_days_to_bounty": team.get("average_time_to_bounty_awarded"),
-        "avg_days_to_first_response": team.get("average_time_to_first_program_response"),
+        "first_response_time_seconds": team.get("first_response_time"),
+        "response_efficiency_percentage": team.get("response_efficiency_percentage"),
         "launched_at": (team.get("launched_at") or "")[:10],
         "state": team.get("state", ""),
+        "submission_state": team.get("submission_state", ""),
     }
 
 

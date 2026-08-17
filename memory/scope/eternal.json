@@ -1,0 +1,71 @@
+{
+  "program": "eternal",
+  "platform": "hackerone",
+  "note_company": "Zomato/Blinkit/Hyperpure (Eternal Ltd, India)",
+  "recorded_at": "2026-07-31T14:10:00Z",
+  "verified_at": "2026-07-31T14:40:00Z",
+  "source": "verified against live HackerOne policy via mcp/hackerone-mcp/server.py policy eternal (public GraphQL API)",
+  "domains": [
+    "district.in", "*.district.in",
+    "edition.in", "*.edition.in",
+    "eternal.com", "*.eternal.com",
+    "hyperpure.com", "*.hyperpure.com",
+    "insider.in", "*.insider.in",
+    "runnr.in", "*.runnr.in",
+    "ticketnew.com", "*.ticketnew.com",
+    "tktnew.com", "*.tktnew.com",
+    "zdev.net", "*.zdev.net",
+    "zomans.com", "*.zomans.com",
+    "zomato.com", "*.zomato.com",
+    "grofer.io", "*.grofer.io",
+    "grofers.com", "*.grofers.com"
+  ],
+  "other_in_scope_exact_only": [
+    "blinkit.com",
+    "bistro-api.blinkit.com",
+    "winecellar.zomato.com",
+    "api.grofers.com",
+    "api2.grofers.com",
+    "mcp-server.zomato.com"
+  ],
+  "excluded_domains": [
+    "*.ali.zomans.com",
+    "*.bstro.io",
+    "*.zomatoportugal.com",
+    "*.blinkit.support",
+    "www.zomatobook.com",
+    "blog.zomato.com",
+    "business-blog.zomato.com",
+    "community.zomato.com",
+    "send.zomato.com",
+    "success.zomato.com",
+    "dev.hyperpure.com",
+    "devapi.hyperpure.com",
+    "devpod.hyperpure.com"
+  ],
+  "excluded_prefix_glob_patterns": [
+    "staging*.runnr.in (confirmed real prefix-glob in policy text; bugbounty.runnr.in is the explicit allowed replacement, NOT excluded)"
+  ],
+  "policy_notes": [
+    "blinkit.com has NO wildcard grant -- exact host only, do not enumerate subdomains there.",
+    "hyperpure.com's dev/staging exclusion is 3 EXACT hostnames (dev/devapi/devpod), NOT a dev*/staging* prefix class -- an earlier version of this file guessed a broad regex from a paraphrase and wrongly excluded devretool.hyperpure.com, which is actually in scope.",
+    "business-blog.zomato.com and www.zomatobook.com are also excluded -- not mentioned in the original user-provided scope text, only found via direct policy verification.",
+    "Verified 2026-07-31 via mcp/hackerone-mcp/server.py policy eternal -- this is now the authoritative source, re-run that command periodically since programs update scope without notice."
+  ],
+  "recon_history": {
+    "2026-07-30_full_wildcard_sweep": {
+      "domains_scanned": 13,
+      "subdomains_checked_takeover": 891,
+      "takeover_candidates": 0,
+      "result": "all 13 wildcards clean, 5 hypothesis leads killed (see memory/leads/eternal.jsonl)"
+    },
+    "2026-07-31_cloud_recon": {
+      "keywords": ["zomato", "blinkit", "grofers", "hyperpure", "runnr", "eternal", "zomans"],
+      "findings": [
+        "public GCS bucket listing at storage.googleapis.com/zomato (object reads blocked, closed billing account) -- lb-936b72",
+        "AWS Apps SSO portals exist for blinkit/grofers/zomato -- informational, lb-23d635",
+        "runnr.firebaseio.com is OPEN but belongs to an unrelated Toronto/Canada alcohol-delivery company also named Runner/Runnr -- NOT Eternal's asset, do not pursue"
+      ]
+    }
+  }
+}

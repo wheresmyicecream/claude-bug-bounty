@@ -4,21 +4,35 @@ This repo is an agent-portable bug bounty plugin for professional hunting across
 
 ## What's Here
 
-### Skills (9 domains — load with `/bug-bounty`, `/web2-recon`, `/token-scan`, etc.)
+### Skills (13 core domains — load with `/bug-bounty`, `/web2-recon`, `/token-scan`, etc.)
 
 | Skill | Domain |
 |---|---|
 | `skills/bug-bounty/` | Master workflow — recon to report, all vuln classes, LLM testing, chains |
 | `skills/bb-methodology/` | **Hunting mindset + 5-phase non-linear workflow + tool routing + session discipline** |
 | `skills/web2-recon/` | Subdomain enum, live host discovery, URL crawling, nuclei |
-| `skills/web2-vuln-classes/` | 18 bug classes with bypass tables (SSRF, open redirect, file upload, Agentic AI) |
+| `skills/web2-vuln-classes/` | 21 bug classes with bypass tables (SSRF, open redirect, file upload, Agentic AI) |
 | `skills/security-arsenal/` | Payloads, bypass tables, gf patterns, always-rejected list |
 | `skills/web3-audit/` | 10 smart contract bug classes, Foundry PoC template, pre-dive kill signals |
 | `skills/meme-coin-audit/` | Meme coin rug pull detection, token authority checks, bonding curve exploits, LP attacks |
 | `skills/report-writing/` | H1/Bugcrowd/Intigriti/Immunefi report templates, CVSS 3.1, human tone |
 | `skills/triage-validation/` | 7-Question Gate, 4 gates, never-submit list, conditionally valid table |
+| `skills/credential-attack/` | Password spray methodology — when/why, 4-stage pipeline, mode selection, lockout tactics, legal guardrails |
+| `skills/mobile-pentest/` | Android/iOS app pentest — runtime-first proxy workflow, APK/IPA decompile, deeplink/exported-activity injection, WebView bridge, SSL pinning bypass |
+| `skills/cicd-security/` | CI/CD pipeline hunting — GitHub Actions injection, secret exfil, self-hosted runner poisoning, OIDC abuse, supply chain attacks |
+| `skills/graphql-audit/` | GraphQL hunting — introspection, field suggestions, batching DoS, IDOR via aliasing, injection, auth bypass, depth bombs |
 
-### Commands (21 slash commands)
+### Vendored per-class + enterprise skills (71, from elementalsouls/Claude-BugHunter, MIT)
+
+`tools/lead_board.py`'s routing table names 34 `hunt-*` skills that had no
+matching skill directory in this repo — recon-discovered leads were being
+routed to skills that didn't exist. Fixed by vendoring all 57 `hunt-*`
+per-bug-class skills plus 14 non-overlapping skills (enterprise IdP/VPN/
+hypervisor attack surface, cloud IAM escalation, mobile pipelines, OSINT,
+reporting extras). See `skills/THIRD_PARTY_NOTICES.md` for full provenance
+and what was deliberately excluded.
+
+### Commands (27 slash commands)
 
 > **Note:** All commands are prefixed to avoid conflicts with Codex's built-in commands.
 > `/resume` is a reserved Codex command — use `/pickup` to continue a previous hunt.
@@ -48,6 +62,10 @@ This repo is an agent-portable bug bounty plugin for professional hunting across
 | `/bypass-403` | `/bypass-403 <url>` — try header/method/encoding tricks against a 403/401 |
 | `/arsenal` | `/arsenal [tool]` — list installed external tools or get an install hint |
 | `/scan-cves` | `/scan-cves <host>` — focused nuclei CVE sweep (high/critical) + optional log4j-scan |
+| `/wordlist-gen` | `/wordlist-gen <target>` — company-specific password wordlist (requires `--with-credential-attack`) |
+| `/osint-employees` | `/osint-employees <target.com>` — employee names + email patterns for spray prep (requires `--with-credential-attack`) |
+| `/breach-check` | `/breach-check <wordlist>` — HIBP k-anonymity check, ranks passwords by breach count (requires `--with-credential-attack`) |
+| `/spray` | `/spray <url> --mode <mode>` — password spray with hard guards: typed-hostname confirm, lockout warning, audit log (requires `--with-credential-attack`) |
 
 ### Agents (8 specialized agents)
 
